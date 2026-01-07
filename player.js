@@ -1,12 +1,10 @@
-/// <reference path="./p5.global-mode.d.ts" />
-
 class Player {
     constructor(layer, state) {
         this.color = color(200,50,120);
-        this.xpos = width / 2; //width & hight = canvas w h
+        this.xpos = width / 2; 
         this.diam = height / 9;
         this.ypos = height - this.diam ;
-        //move vars
+
         this.xvel = 0;
         this.yvel = 1.5;
         this.jumpState = 0;
