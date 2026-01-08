@@ -12,7 +12,7 @@ class spawner {
         var twoSecondsSinceStart = currentTimeInTenths == 20;
         var startedAndNotFinished = this.startedSpawningYet == true && this.runTime != currentTimeInTenths
         var isFirstSpawnTime = twoSecondsSinceStart && this.startedSpawningYet != true
-        var isTimeToSpawn = currentTimeInTenths == this.timeOfLastSpawn + this.msUntilNextSpawn
+        var isTimeToSpawn = currentTimeInTenths == this.timeOfLastSpawn + this.tenthsUntilNextSpawn
 
         if (startedAndNotFinished || isFirstSpawnTime) {
             this.runTime = currentTimeInTenths;
@@ -29,7 +29,7 @@ class spawner {
     resetSpawner(){
         this.startedSpawningYet = false; 
         this.spawnRate = spawnRate;
-        for (enemy of enemiesList) {
+        for (const enemy of enemiesList) {
             enemy.ypos = height *2; //hides enemies by moving
         }
     }
@@ -57,29 +57,28 @@ class spawner {
     }
     updateSpawnTimings(){
         this.timeOfLastSpawn = currentTimeInTenths; // set spawntime to current timer value
-        this.msUntilNextSpawn = round(this.spawnRate * -1 * log(this.r)) + 1; //calculate time until next spawn
+        this.tenthsUntilNextSpawn = round(this.spawnRate * -1 * log(this.r)) + 1; //calculate time until next spawn
         this.spawnRate = this.spawnRate * 0.97; // spawns faster after some spawns
 
-        if (this.msUntilNextSpawn >= 50) { //Spawn time max 5 seconds
-            this.msUntilNextSpawn = 50;
+        if (this.tenthsUntilNextSpawn >= 50) { //Spawn time max 5 seconds
+            this.tenthsUntilNextSpawn = 50;
         }
         if (this.spawnRate >= 25) {
-            if (this.msUntilNextSpawn <= 10) { //if spawntime is less one second before spawnrate is below 25, it will be 2 seconds
-                this.msUntilNextSpawn = 20;
+            if (this.tenthsUntilNextSpawn <= 10) { //if spawntime is less one second before spawnrate is below 25, it will be 2 seconds
+                this.tenthsUntilNextSpawn = 20;
             }
-
+            return;
         }
-        if (this.spawnRate <= 25) {
-            if (this.msUntilNextSpawn >= 30) {
-                this.msUntilNextSpawn = 30;
-            }
-            if (this.spawnRate <= 17) {
-                if (this.msUntilNextSpawn >= 20) {
-                    this.msUntilNextSpawn = 20;
-                }
-            }
 
+        if (this.tenthsUntilNextSpawn >= 30) {
+            this.tenthsUntilNextSpawn = 30;
         }
+        if (this.spawnRate <= 17) {
+            if (this.tenthsUntilNextSpawn >= 20) {
+                this.tenthsUntilNextSpawn = 20;
+            }
+        }
+
     }
     removeIfDead(){
         for (var i = 0; i < enemiesList.length; i++) {

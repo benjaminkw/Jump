@@ -20,7 +20,6 @@ function BackgroundLayer() {
     this.objects = [];
 
     this.Draw = function() {
-
         if (gameStart && gameEnd != true) {
             for (var i = 0; i < this.objects.length; i++) {
                 this.objects[i].Draw();
