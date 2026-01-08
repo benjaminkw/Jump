@@ -1,13 +1,8 @@
-/// <reference path="./p5.global-mode.d.ts" />
-
 class Enemy {
     constructor(type) {
         this.type = type;
         this.yvel = 0;
         objLayer.objects.push(this);
-
-
-
 
         if (this.type == 1) {
             this.color = ("rgba(200, 101, 20, 0.8)");
@@ -53,21 +48,15 @@ class Enemy {
     }
 
     Draw() {
-
         fill(this.color);
         stroke(70);
-
         if (this.type == 1 || this.type == 2 || this.type == 4) {
             circle(this.xpos, this.ypos, this.diam);
         }
-
         else if (this.type == 3) {
             rectMode(CENTER);
             rect(this.xpos, this.ypos, this.rectSize[0], this.rectSize[1], 20);
         }
-        
-
-
     }
 
     update() {
@@ -195,7 +184,7 @@ class EndScreen {
         if (gameEnd) {
             cursor();
             setTimeout(() => { this.contn(); }, 800);  //call contn function after 800 ms
-            timerVal = 0; //reset timer when game ends
+            currentTimeInTenths = 0; //reset timer when game ends
         }
     }
 
@@ -228,7 +217,7 @@ class PointText {
         this.loc = [player.xpos, player.ypos];
         this.xpos = this.loc[0] -40;
         this.ypos = this.loc[1] - 150;
-        this.creationTime = timerVal;
+        this.creationTime = currentTimeInTenths;
         this.color = 150;
         this.xdir = random(-4, 4);
 

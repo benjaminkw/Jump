@@ -1,5 +1,3 @@
-/// <reference path="./p5.global-mode.d.ts" />
-
 function ObjectLayer() {
     this.objects = [];
 
@@ -22,7 +20,6 @@ function BackgroundLayer() {
     this.objects = [];
 
     this.Draw = function() {
-
         if (gameStart && gameEnd != true) {
             for (var i = 0; i < this.objects.length; i++) {
                 this.objects[i].Draw();
@@ -32,15 +29,12 @@ function BackgroundLayer() {
 
 }
 
-
 function ScreenLayer() {
     this.objects = [];
 
     this.update = function() {
-        for(var i=0; i < this.objects.length; i++) {
-            if (this.objects[i].update != null) {       //only run update function if it exists
-                this.objects[i].update();
-            }
+        for(element of this.objects) {
+            element.update();
         }
     }
 

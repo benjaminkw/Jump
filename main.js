@@ -1,4 +1,3 @@
-/// <reference path="./p5.global-mode.d.ts" />
 //global vars
 var spawnRate = 30;
 //layer variables
@@ -21,49 +20,38 @@ var fastMode = false;
 var fastMultiplier = 3;
 
 //timer variable
-var timerVal = 0;
+var currentTimeInTenths = 0;
 //timer runs when game is started
-function timeIt() {
+function incrementCounter() {
   if (gameStart && gameEnd != true) {
-    timerVal++;
+    currentTimeInTenths++;
   }
 }
 
-
-
 function setup() {
   createCanvas(windowWidth, windowHeight );
-  setInterval(timeIt, 100);
-
-
-  objLayer = new ObjectLayer(); //create object layer
-  backLayer = new BackgroundLayer(); //create background layer
-  screenLayer = new ScreenLayer(); //create start layer
-
+  setInterval(incrementCounter, 100);
+  objLayer = new ObjectLayer(); 
+  backLayer = new BackgroundLayer(); 
+  screenLayer = new ScreenLayer(); 
   startScreen = new StartScreen();
   endScreen = new EndScreen();
-  
-
-
   player = new Player(objLayer, "move"); //create player object on objLayer
-  
+
   back = new Background();
+  spawnerX = new spawner();
 }
-
-
 
 function draw() {
   clear();
   update();
   render();
-  
 }
 
 function update(){
-  spawner();
+  spawnerX .spawnerUpdate();
   objLayer.update();
   screenLayer.update();
-
 }
 
 function render(){
@@ -71,5 +59,4 @@ function render(){
   backLayer.Draw();
   objLayer.Draw();
   screenLayer.Draw();
-
 }

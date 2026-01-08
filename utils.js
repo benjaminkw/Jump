@@ -1,103 +1,101 @@
-/// <reference path="./p5.global-mode.d.ts" />
 
-function spawner (){
-
-    if (gameEnd || gameStart == false) { //reset spawner when game ends
-        this.startspwn = false; 
-        this.spawnRate = spawnRate;
-        for (var i = 0; i <enemiesList.length; i++) {
-            enemiesList[i].ypos = height *2; //place current enemies outside screen
-        }
+class spawner {
+    constructor() {
     }
 
-    //-t * log(r)  poisson distribution/process  r = rand 0-1    t = avg time between arrivals, 1 = 0.1 secs
-   this.r = random();
+    spawnerUpdate(){
+        if (gameEnd || gameStart == false) { //reset spawner when game ends
+            this.resetSpawner();
+        }
+        this.randomEnemyType();
 
-   this.spawnRand = random(0, 31);
-   if (this.spawnRand >= this.spawnRate) {
-       if (this.spawnRand >= this.spawnRate + 13) {
-           this.enemyType = 3;
-            if (this.spawnRand >= this.spawnRate + 22) {
-                this.enemyType = 4;
+        var twoSecondsSinceStart = currentTimeInTenths == 20;
+        var startedAndNotFinished = this.startedSpawningYet == true && this.runTime != currentTimeInTenths
+        var isFirstSpawnTime = twoSecondsSinceStart && this.startedSpawningYet != true
+        var isTimeToSpawn = currentTimeInTenths == this.timeOfLastSpawn + this.tenthsUntilNextSpawn
+
+        if (startedAndNotFinished || isFirstSpawnTime) {
+            this.runTime = currentTimeInTenths;
+            this.startedSpawningYet = true;
+            if (isTimeToSpawn || twoSecondsSinceStart) {
+                enemiesList.push(new Enemy(this.enemyType)); 
+                this.updateSpawnTimings();
             }
-       }
-       else {
-           this.enemyType = 2;
-       }
-   }
-   else {
-       this.enemyType = 1;
-   }
-
+        }
+        this.removeIfDead();
  
-    if (this.spawnRate <= 5) { // makes sure spawnrate doesnt get too low
-        this.spawnRate = 6;
     }
 
-
-    if ((this.startspwn == true && this.runTime != timerVal) || (timerVal == 20 && this.startspwn != true)) {
-        this.runTime = timerVal;
-        this.startspwn = true;
-        if (timerVal == this.lastSpwnTime + this.spwnTime || timerVal == 20){ //if the current timer value is equal to last spawn time + time until next spawn
-
-            enemiesList.push(new Enemy(this.enemyType)); //add the new enemy to array
-            this.lastSpwnTime = timerVal;             // set spawntime to current timer value
-            this.spwnTime =  round(this.spawnRate * -1 * log(this.r)) +1;    //calculate time until next spawn
-            this.spawnRate = this.spawnRate * 0.97; // spawns faster after some spawns
-
-            if (this.spwnTime >= 50)  {  //Spawn time max 5 seconds
-                this.spwnTime = 50;
-            }
-            if (this.spawnRate >= 25) {
-                if (this.spwnTime <= 10) { //if spawntime is less one second before spawnrate is below 25, it will be 2 seconds
-                    this.spwnTime = 20;
-            }
-
-            }
-            if (this.spawnRate <= 25) {
-                if (this.spwnTime >= 30)  { 
-                    this.spwnTime = 30;
+    resetSpawner(){
+        this.startedSpawningYet = false; 
+        this.spawnRate = spawnRate;
+        for (const enemy of enemiesList) {
+            enemy.ypos = height *2; //hides enemies by moving
+        }
+    }
+    randomEnemyType(){
+        //-t * log(r)  poisson distribution/process  r = rand 0-1    t = avg time between arrivals, 1 = 0.1 secs
+        this.r = random();
+        this.spawnRand = random(0, 31);
+        if (this.spawnRand >= this.spawnRate) {
+            if (this.spawnRand >= this.spawnRate + 13) {
+                this.enemyType = 3;
+                if (this.spawnRand >= this.spawnRate + 22) {
+                    this.enemyType = 4;
                 }
-                if (this.spawnRate <= 17){
-                    if (this.spwnTime >= 20) {
-                        this.spwnTime = 20;
-                    }
-                }
-
             }
-
-            console.log("spawnRate   " + this.spawnRate);
-            console.log("lastspw:  " + this.lastSpwnTime );
-            console.log("spwnTime:  "+ this.spwnTime);
-            console.log(enemiesList);
-
+            else {
+                this.enemyType = 2;
+            }
+        }
+        else {
+            this.enemyType = 1;
+        }
+        if (this.spawnRate <= 5) { // makes sure spawnrate doesnt get too low
+            this.spawnRate = 6;
         }
     }
+    updateSpawnTimings(){
+        this.timeOfLastSpawn = currentTimeInTenths; // set spawntime to current timer value
+        this.tenthsUntilNextSpawn = round(this.spawnRate * -1 * log(this.r)) + 1; //calculate time until next spawn
+        this.spawnRate = this.spawnRate * 0.97; // spawns faster after some spawns
 
-
-
-    //check if enemy is dead, (outside screen) and splice from array.
-    for (var i = 0; i <enemiesList.length; i++) {
-        if (enemiesList[i].xpos < -200 || enemiesList[i].xpos > width + 200) {
-            enemiesList.splice(i, 1);
-            continue;
+        if (this.tenthsUntilNextSpawn >= 50) { //Spawn time max 5 seconds
+            this.tenthsUntilNextSpawn = 50;
         }
-        if (enemiesList[i].ypos > height + enemiesList[i].diam) {
-            enemiesList.splice(i, 1);
+        if (this.spawnRate >= 25) {
+            if (this.tenthsUntilNextSpawn <= 10) { //if spawntime is less one second before spawnrate is below 25, it will be 2 seconds
+                this.tenthsUntilNextSpawn = 20;
+            }
+            return;
+        }
+
+        if (this.tenthsUntilNextSpawn >= 30) {
+            this.tenthsUntilNextSpawn = 30;
+        }
+        if (this.spawnRate <= 17) {
+            if (this.tenthsUntilNextSpawn >= 20) {
+                this.tenthsUntilNextSpawn = 20;
+            }
+        }
+
+    }
+    removeIfDead(){
+        for (var i = 0; i < enemiesList.length; i++) {
+            var enemyToTheLeftOfScreen = enemiesList[i].xpos < -200;
+            var enemyToTheRightOfScreen =  enemiesList[i].xpos > width + 200;
+            var enemyBelowScreen = enemiesList[i].ypos > height + enemiesList[i].diam;
+            var enemyIsDead = enemyToTheLeftOfScreen || enemyToTheRightOfScreen || enemyBelowScreen;
+            if (enemyIsDead) {
+                enemiesList.splice(i, 1);
+            }
         }
     }
-
-
 }
-
-
-
 
 function pointText(streak, value) { //create new point text.
     if (this.textVal != null) {
         delete this.textVal;
     }
     this.textVal = new PointText(streak, value);
-
-
 }

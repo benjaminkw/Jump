@@ -1,12 +1,10 @@
-/// <reference path="./p5.global-mode.d.ts" />
-
 class Player {
     constructor(layer, state) {
         this.color = color(200,50,120);
-        this.xpos = width / 2; //width & hight = canvas w h
+        this.xpos = width / 2; 
         this.diam = height / 9;
         this.ypos = height - this.diam ;
-        //move vars
+
         this.xvel = 0;
         this.yvel = 1.5;
         this.jumpState = 0;
@@ -15,8 +13,10 @@ class Player {
 
         this.state = state;
         layer.objects.push(this);
-    }
 
+        //this.circularCollisionStrategy = new CircularCollisionStrategy();
+        //rectangularCollisionStrategy = new RectangularCollisionStrategy();
+    }
 
     update(){
         this[this.state]();
@@ -38,24 +38,18 @@ class Player {
     }
 
     move(){
-    
         if (keyIsDown(RIGHT_ARROW) || keyIsDown(68)) {   //acceleration left/right
             this.xvel += 2 * fastMultiplier*2;
         }
         if (keyIsDown(LEFT_ARROW) || keyIsDown(65)) {
             this.xvel += -2 * fastMultiplier*2;
         }
-
         if (keyIsDown(UP_ARROW) || keyIsDown(87)) {
             this.Jump();
         }
-
-
         if (this.jumpState == 1) {                 //downward acceleration when in air
             this.yvel += (this.diam * 0.007);
         }
-
-
         this.xpos += this.xvel;
         this.ypos += this.yvel;
 
@@ -79,7 +73,6 @@ class Player {
         if (this.xpos <= 0 + (this.diam / 2)) {
             this.xpos = 0 + (this.diam / 2);
         }
-
 
         this.xvel = this.xvel * 0.8;        //x velocity decelleration
 
@@ -115,69 +108,81 @@ class Player {
 
     }
 
+    checkCollision(){
+        this.radius = this.diam / 2
+        for (const enemy of enemiesList) {
+            var collidedWithCurrentEnemyAndDied = false
 
-
-    checkCollision (){
-        //for every enemy
-        for (var i = 0; i <enemiesList.length; i++) {
-            if (enemiesList[i].type == 1 || enemiesList[i].type == 2 || enemiesList[i].type == 4) {
-                //collision for circular enemies
-
-                this.collisionDist = sqrt(sq(this.xpos - enemiesList[i].xpos) + sq(this.ypos - enemiesList[i].ypos))
-                //check collision
-    
-                if (this.collisionDist <= this.diam / 2 + enemiesList[i].diam / 2) {
-                    //this.yvel = 0;
-    
-                    //check if bottom of player is over of enemy center and function Jump
-                    if (this.ypos + (this.diam / 2) <= enemiesList[i].ypos) {
-                        enemiesList[i].dead();
-                        this.Jump(true);
-                        this.streak += 1; 
-                        this.playerPoints += enemiesList[i].pointValue * this.streak;
-                        pointText(this.streak, enemiesList[i].pointValue);
-                    }
-                    //if player is not on top return true
-                    else {
-                        this.state = "Dead";
-                    }
-                }
-            }
-                //collision for enemy type 3 rectangle
-            else if (enemiesList[i].type == 3)  {
-                //dist from center of player to center of enemy
-                this.collisionDist = sqrt(sq(this.xpos - enemiesList[i].xpos) + sq(this.ypos - enemiesList[i].ypos)) 
-
-                this.eSizeW = enemiesList[i].rectSize[0]; //grab width and height of enemy rect
-                this.eSizeH = enemiesList[i].rectSize[1];
-
-                if (this.collisionDist <= this.diam / 2 + this.eSizeW / 2) { //if within range
-                    //if player is under enemy, no collision and continue
-                    if (this.ypos - this.diam / 2 >= enemiesList[i].ypos + this.eSizeH / 2) {
-                        continue;
-                    }
-                    //if player is over enemy rect
-                    if (this.ypos + this.diam / 2 <= enemiesList[i].ypos) {
-                        //if player bottom is colliding with enemy top
-                        if(this.ypos + this.diam / 2 >= enemiesList[i].ypos - this.eSizeH / 2) {
-                            enemiesList[i].dead();
-                            this.Jump(true);
-                            this.streak += 1; 
-                            this.playerPoints += enemiesList[i].pointValue * this.streak;
-                            pointText(this.streak, enemiesList[i].pointValue); 
-                        }
-                        else {
-                            continue;
-                        }
-                    }
-                    
-                    else {
-                        this.state = "Dead";
-                    }
-                }
-            }
+            this.distanceFromCenter = sqrt(sq(this.xpos - enemy.xpos) + sq(this.ypos - enemy.ypos))
+            this.isAboveEnemy = this.ypos + this.radius <= enemy.ypos
             
+            if (enemy.type == 1 || enemy.type == 2 || enemy.type == 4) {
+                if(this.checkCircCollision(enemy)){
+                    collidedWithCurrentEnemyAndDied = this.circHandleCollision(enemy);
+                }
+            }
+            else if (enemy.type == 3)  {
+                if(this.checkRectCollision(enemy)){
+                    collidedWithCurrentEnemyAndDied = this.rectHandleCollision(enemy);
+                }
+            }
+            if(collidedWithCurrentEnemyAndDied){
+                this.state = "Dead";
+            }
+
         }
+    }
+
+    rectHandleCollision(enemy){
+        const eSizeH = enemy.rectSize[1];
+        const playerUnderEnemy = this.ypos - this.radius >= enemy.ypos + eSizeH / 2;
+        if (playerUnderEnemy) {
+            return false;
+        }
+        if (this.isAboveEnemy) {
+            const bottomCollidingWithTop = this.ypos + this.radius >= enemy.ypos - eSizeH / 2
+            if(bottomCollidingWithTop) {
+                this.killEnemyByHeadbutt(enemy);
+                return false;
+            }
+            //didn't die but also didn't kill him 
+            return false;
+        }
+        return true;
+        
+    }
+
+    circHandleCollision(enemy){
+        if (this.isAboveEnemy) {
+            this.killEnemyByHeadbutt(enemy);
+            return false;
+        }
+        return true;
+    }
+
+    checkRectCollision(enemy){
+        const eSizeW = enemy.rectSize[0]; 
+        const isColliding = this.distanceFromCenter <= this.radius + eSizeW / 2;
+        if (isColliding) {
+            return true;
+        }
+        return false;
+    }
+
+    checkCircCollision(enemy){
+        const isColliding = this.distanceFromCenter <= this.radius + enemy.diam / 2
+        if (isColliding) {
+            return true;
+        }
+        return false;
+    }
+
+    killEnemyByHeadbutt(enemy){
+        enemy.dead();
+        this.Jump(true);
+        this.streak += 1; 
+        this.playerPoints  += enemy.pointValue * this.streak;
+        pointText(this.streak, enemy.pointValue);
     }
 
     Dead() {
@@ -186,7 +191,6 @@ class Player {
             setTimeout(() => {gameEnd = true;}, 500);
             this.contEnd = false;
         }
-
         this.ypos += 10; //player falls out of screen
     }
 
